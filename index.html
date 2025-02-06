@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>olAA</title>
+    <title>wAA</title>
     <style>
         @font-face {
             font-family: "Saitamaar";
@@ -92,7 +92,8 @@
 
         #backgroundScreen {
             z-index: 1;
-            background-size: cover;
+            background-size: 100%;
+            background-repeat: no-repeat;
             background-position: center;
         }
     </style>
@@ -116,6 +117,18 @@
     <div>
         배경그림 회색조
         <input type="range" id="grayscaleSlider" min="0" max="100" value="0">
+    </div>
+    <div>
+        배경그림 크기
+        <input type="range" id="backgroundSizeSlider" min="50" max="200" value="100">
+    </div>
+    <div>
+        배경그림 가로 위치
+        <input type="range" id="backgroundXSlider" min="0" max="100" value="50">
+    </div>
+    <div>
+        배경그림 세로 위치
+        <input type="range" id="backgroundYSlider" min="0" max="100" value="50">
     </div>
     <div>
         글꼴 크기
@@ -161,6 +174,9 @@
     const fontSizeSlider = document.querySelector('#fontSizeSlider');
     const opacitySlider = document.querySelector('#opacitySlider');
     const grayscaleSlider = document.querySelector('#grayscaleSlider');
+    const backgroundSizeSlider = document.querySelector('#backgroundSizeSlider');
+    const backgroundXSlider = document.querySelector('#backgroundXSlider');
+    const backgroundYSlider = document.querySelector('#backgroundYSlider');
 
     function decodeHtmlEntity(encodedStr) {
         const textArea = document.createElement('textarea');
@@ -170,6 +186,7 @@
 
     function clearBackground() {
         backgroundInput.value = '';
+        backgroundScreen.style.backgroundImage = '';
     }
 
     fontSizeSlider.addEventListener('input', function () {
@@ -183,11 +200,23 @@
     });
 
     grayscaleSlider.addEventListener('input', function () {
-        const grayscaleValue = grayscaleSlider.value;
-        backgroundScreen.style.filter = `grayscale(${grayscaleValue}%)`;
+        backgroundScreen.style.filter = `grayscale(${grayscaleSlider.value}%)`;
     });
 
+    backgroundSizeSlider.addEventListener('input', function () {
+        backgroundScreen.style.backgroundSize = `${backgroundSizeSlider.value}%`;
+    })
+
+    backgroundXSlider.addEventListener('input', function () {
+        backgroundScreen.style.backgroundPositionX = `${backgroundXSlider.value}%`;
+    })
+
+    backgroundYSlider.addEventListener('input', function () {
+        backgroundScreen.style.backgroundPositionY = `${backgroundYSlider.value}%`;
+    })
+
     backgroundInput.addEventListener('change', function (event) {
+        console.log('check')
         const file = event.target.files[0];
         if (file) {
             const reader = new FileReader();
