@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>olAA</title>
+    <style>
+        @font-face {
+            font-family: "Saitamaar";
+            src: url("https://da1eth.github.io/AA/HeadKasen.woff2") format("woff2");
+            font-display: swap;
+        }
+
+        @font-face {
+            font-family: "Saitamaar";
+            font-style: normal;
+            font-weight: 400;
+            src: url("https://cdn.jsdelivr.net/font-nanum/1.0/nanumgothiccoding/v2/NanumGothicCoding-Regular.eot");
+            src: url("https://cdn.jsdelivr.net/font-nanum/1.0/nanumgothiccoding/v2/NanumGothicCoding-Regular.eot?#iefix") format('embedded-opentype'), url("https://cdn.jsdelivr.net/font-nanum/1.0/nanumgothiccoding/v2/NanumGothicCoding-Regular.woff") format('woff'), url("https://cdn.jsdelivr.net/font-nanum/1.0/nanumgothiccoding/v2/NanumGothicCoding-Regular.ttf") format('truetype');
+            unicode-range: U+AC00-D7A3, U+3130-318F;
+        }
+
+        body {
+        }
+
+        .char {
+            background-color: rgba(0, 0, 255, 0.1);
+        }
+
+        .char::selection {
+            background-color: transparent;
+            color: inherit;
+        }
+
+        .eof {
+            background-color: rgba(0, 255, 255, 0.1);
+        }
+
+        .selection-box {
+            position: absolute;
+            border: 1px dashed rgba(0, 0, 0, 0.5);
+            background-color: rgba(0, 0, 0, 0.1);
+            pointer-events: none;
+            z-index: 3;
+        }
+
+        .highlight {
+            background-color: rgba(255, 0, 0, 0.3);
+        }
+
+        .canvas {
+            display: flex;
+            width: 1000px;
+            height: 1000px;
+            border: solid 1px black;
+            resize: both;
+            overflow: auto;
+        }
+
+        .bezel {
+            flex-grow: 1;
+            position: relative;
+            margin: 1em;
+        }
+
+        .screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            font-family: 'Saitamaar', sans-serif;
+            font-size: 16px;
+            margin: 0;
+            padding: 0;
+            border: 0;
+            line-height: 1.125em;
+        }
+
+        #panel {
+            z-index: 3;
+            user-select: none;
+            overflow: hidden;
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+
+        #writer {
+            overflow-x: scroll;
+            z-index: 2;
+            resize: none;
+            background-color: transparent;
+        }
+
+        #backgroundScreen {
+            z-index: 1;
+            background-size: cover;
+            background-position: center;
+        }
+    </style>
+</head>
+<body>
+<header>
+    <h1>wAA(PoC)</h1>
+    <p>재미로 만들어보는 웹기반 AA 편집기</p>
+</header>
+
+<div>
+    <div>
+        배경그림 삽입
+        <input type="file" id="backgroundInput" accept="image/*"/>
+        <button onclick="clearBackground()">파일 선택 취소</button>
+    </div>
+    <div>
+        배경그림 투명도
+        <input type="range" id="opacitySlider" min="0" max="100" value="100">
+    </div>
+    <div>
+        배경그림 회색조
+        <input type="range" id="grayscaleSlider" min="0" max="100" value="0">
+    </div>
+    <div>
+        글꼴 크기
+        <input type="range" id="fontSizeSlider" min="16" max="64" value="16">
+    </div>
+</div>
+<div>
+    <div class="canvas">
+        <div class="bezel">
+            <div id="panel" class="screen" onclick="focusWriter()"></div>
+            <textarea id="writer" class="screen" spellcheck="false"></textarea>
+            <div id="backgroundScreen" class="screen"></div>
+        </div>
+    </div>
+</div>
+<div>
+    <ul>
+        <li>캔버스 오른쪽 아래를 잡고 드래그하여 캔버스 크기 변경 가능.</li>
+        <li>
+            Selection 모드
+            <ul>
+                <li>문자나 문자열을 선택한 상태.</li>
+                <li>특정 문자를 클릭하거나 패널에서 마우스를 드래그하여 문자열을 선택할 수 있다.</li>
+                <li>문자 중 빨간색 배경으로 칠해진 게 하나라도 있는 경우 Selection 모드임.</li>
+                <li>셀렉션 모드 중에는 복사/잘라내기/붙여넣기가 셀렉션에 맞춰 동작한다.</li>
+                <li>패널의 비어있는 부분(회색 부분)을 클릭하면 셀렉션 모드가 해제된다.</li>
+                <li>현재 셀렉션 모드에선 Ctrl + Z(Undo)가 되지 않으니 주의.</li>
+            </ul>
+        </li>
+        <li>커서가 활성화된 상태에서 Shift + 방향키를 통해 일반적인 문자열 선택 기능.</li>
+        <li>패널의 가로폭보다 긴 내용을 입력하면 화면이 깨진다. 이 경우 캔버스를 내용길이만큼 늘려주면 된다.</li>
+    </ul>
+</div>
+<script>
+    let history = [];
+
+    const panel = document.querySelector('#panel');
+    const writer = document.querySelector('#writer');
+    const backgroundScreen = document.querySelector('#backgroundScreen');
+
+    const backgroundInput = document.querySelector('#backgroundInput');
+
+    const fontSizeSlider = document.querySelector('#fontSizeSlider');
+    const opacitySlider = document.querySelector('#opacitySlider');
+    const grayscaleSlider = document.querySelector('#grayscaleSlider');
+
+    function decodeHtmlEntity(encodedStr) {
+        const textArea = document.createElement('textarea');
+        textArea.innerHTML = encodedStr;
+        return textArea.value;
+    }
+
+    function clearBackground() {
+        backgroundInput.value = '';
+    }
+
+    fontSizeSlider.addEventListener('input', function () {
+        const fontSize = fontSizeSlider.value + 'px';
+        panel.style.fontSize = fontSize;
+        writer.style.fontSize = fontSize;
+    });
+
+    opacitySlider.addEventListener('input', function () {
+        backgroundScreen.style.opacity = opacitySlider.value / 100;
+    });
+
+    grayscaleSlider.addEventListener('input', function () {
+        const grayscaleValue = grayscaleSlider.value;
+        backgroundScreen.style.filter = `grayscale(${grayscaleValue}%)`;
+    });
+
+    backgroundInput.addEventListener('change', function (event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                backgroundScreen.style.backgroundImage = `url(${e.target.result})`;
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if ((event.ctrlKey || event.metaKey) && event.key === 'a') {
+            const highlight = document.querySelector('.highlight');
+            if (highlight !== null) {
+                event.preventDefault();
+
+                const chars = document.querySelectorAll('.char');
+                chars.forEach(c => {
+                    c.classList.add('highlight');
+                })
+            }
+        }
+    });
+
+    document.addEventListener("copy", function (event) {
+        const highlight = document.querySelector('.highlight');
+
+        if (highlight !== null) {
+            event.preventDefault();
+
+            const highlightArray = Array.from(document.querySelectorAll('.highlight'));
+            const firstLine = highlightArray[0].dataset.line;
+            const lastLine = highlightArray[highlightArray.length - 1].dataset.line;
+            const v = []
+
+            for (let i = (firstLine - firstLine); i <= (lastLine - firstLine); i++) {
+                v.push([""])
+            }
+
+            highlightArray.forEach((el) => {
+                const l = parseInt(el.dataset.line) - parseInt(firstLine)
+                v[l] += el.innerHTML;
+            });
+
+            event.clipboardData.setData("application/json", JSON.stringify(v));
+        }
+    });
+
+    document.addEventListener('cut', function (event) {
+        const highlight = document.querySelector('.highlight');
+        if (highlight !== null) {
+            event.preventDefault();
+
+            const highlightElements = document.querySelectorAll('.highlight');
+            const highlightArray = Array.from(highlightElements);
+            const firstLine = highlightArray[0].dataset.line;
+            const lastLine = highlightArray[highlightArray.length - 1].dataset.line;
+            const v = []
+
+            for (let i = (firstLine - firstLine); i <= (lastLine - firstLine); i++) {
+                v.push([""])
+            }
+
+            highlightArray.forEach((el, i) => {
+                const position = parseInt(el.dataset.position);
+                const l = parseInt(el.dataset.line) - parseInt(firstLine)
+                v[l] += el.innerHTML;
+                writer.value = writer.value.slice(0, position - i) + writer.value.slice(position + 1 - i);
+            });
+
+            writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
+
+            event.clipboardData.setData("application/json", JSON.stringify(v));
+        }
+    });
+
+    document.addEventListener("paste", function (event) {
+        const highlight = document.querySelector('.highlight');
+        if (highlight !== null) {
+            event.preventDefault();
+
+            const clipboardData = JSON.parse(event.clipboardData.getData('application/json'));
+            const textarea = document.getElementById('writer');
+            const firstLine = parseInt(highlight.dataset.line);
+            const column = parseInt(highlight.dataset.column);
+
+            console.log(clipboardData)
+
+            clipboardData.forEach((v, i) => {
+                const line = firstLine + i;
+                const el = document.querySelector('[data-line="' + line + '"][data-column="' + column + '"]');
+                const position = parseInt(el.dataset.position);
+
+                const textBefore = textarea.value.substring(0, position);
+                const textAfter = textarea.value.substring(position);
+
+                textarea.value = textBefore + decodeHtmlEntity(v) + textAfter
+
+                const event = new Event('input', {bubbles: true, cancelable: true});
+                textarea.dispatchEvent(event);
+            });
+        }
+    });
+
+    document.addEventListener("undo", function (event) {
+        event.preventDefault();
+
+        history.pop()
+    })
+
+    function focusWriter() {
+        const firstHighlight = document.querySelector('.highlight');
+
+        if (firstHighlight === null) {
+            writer.focus()
+        } else {
+            const position = parseInt(firstHighlight.dataset.position);
+            writer.setSelectionRange(position, position);
+            writer.focus();
+        }
+    }
+
+    writer.addEventListener('input', function () {
+
+        let value = writer.value;
+        let position = 0;
+        let panelResult = "";
+
+        const lineSplit = value.split(/\n/g);
+        let lineIndex;
+        for (lineIndex = 0; lineIndex < lineSplit.length; lineIndex++) {
+            const columnSplit = lineSplit[lineIndex].split('');
+            let columnIndex;
+            for (columnIndex = 0; columnIndex < columnSplit.length; columnIndex++) {
+                panelResult += '<span class="char" data-line="' + lineIndex + '" data-column="' + columnIndex + '" data-position="' + position++ + '">' + columnSplit[columnIndex] + '</span>'
+            }
+            if (lineIndex + 1 < lineSplit.length) {
+                panelResult += '<span class="char eof" data-line="' + lineIndex + '" data-column="' + columnIndex + '" data-position="' + position++ + '">^<br /></span>'
+            }
+        }
+
+        panel.innerHTML = panelResult
+    });
+
+    let isDragging = false;
+    let selectionBox = null;
+    let startX = 0;
+    let startY = 0;
+
+    panel.addEventListener('mousedown', (e) => {
+        isDragging = true;
+        startX = e.pageX;
+        startY = e.pageY;
+
+        selectionBox = document.createElement('div');
+        selectionBox.classList.add('selection-box');
+        document.body.appendChild(selectionBox);
+
+        selectionBox.style.left = `${startX}px`;
+        selectionBox.style.top = `${startY}px`;
+        selectionBox.style.width = '0';
+        selectionBox.style.height = '0';
+    });
+
+    document.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+
+        const width = e.pageX - startX;
+        const height = e.pageY - startY;
+
+        selectionBox.style.width = `${Math.abs(width)}px`;
+        selectionBox.style.height = `${Math.abs(height)}px`;
+        selectionBox.style.left = width > 0 ? `${startX}px` : `${e.pageX}px`;
+        selectionBox.style.top = height > 0 ? `${startY}px` : `${e.pageY}px`;
+
+        const selectionRect = selectionBox.getBoundingClientRect();
+        const chars = document.querySelectorAll('.char');
+
+        chars.forEach(c => {
+            const cRect = c.getBoundingClientRect();
+            if (isOverlap(selectionRect, cRect)) {
+                c.classList.add('highlight');
+            } else {
+                c.classList.remove('highlight');
+            }
+        });
+
+    });
+
+    document.addEventListener('mouseup', () => {
+        if (!isDragging) return;
+        isDragging = false;
+
+        const selectionRect = selectionBox.getBoundingClientRect();
+        const chars = document.querySelectorAll('.char');
+
+        chars.forEach(c => {
+            const cRect = c.getBoundingClientRect();
+            if (isOverlap(selectionRect, cRect)) {
+                c.classList.add('highlight');
+            } else {
+                c.classList.remove('highlight');
+            }
+        });
+
+        document.body.removeChild(selectionBox);
+        selectionBox = null;
+    });
+
+    function isOverlap(rect1, rect2) {
+        return !(rect1.right < rect2.left ||
+            rect1.left > rect2.right ||
+            rect1.bottom < rect2.top ||
+            rect1.top > rect2.bottom);
+    }
+</script>
+</body>
+</html>
