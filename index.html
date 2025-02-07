@@ -246,6 +246,34 @@
         }
     });
 
+    function getSelection() {
+        const firstHighlight = document.querySelector('.highlight');
+        const selection = [];
+
+        if (firstHighlight !== null) {
+            const highlightArray = Array.from(document.querySelectorAll('.highlight'));
+            const firstLine = parseInt(highlightArray[0].dataset.line);
+            const lastLine = parseInt(highlightArray[highlightArray.length - 1].dataset.line);
+
+            for (let i = (firstLine - firstLine); i <= (lastLine - firstLine); i++) {
+                const line = i + firstLine;
+                const lineColumns = document.querySelectorAll(`.highlight[data-line="${line}"]`);
+                const firstColumnPosition = lineColumns[0].dataset.position;
+                const lastColumnPosition = lineColumns[lineColumns.length - 1].dataset.position;
+                let value = "";
+                lineColumns.forEach((c) => {
+                    value += c.innerHTML;
+                });
+                selection.push({
+                    start: firstColumnPosition,
+                    end: lastColumnPosition,
+                    value: value
+                });
+            }
+        }
+        return selection;
+    }
+
     document.addEventListener("copy", function (event) {
         const highlight = document.querySelector('.highlight');
 
@@ -515,6 +543,7 @@
                 c.classList.remove('highlight');
             }
         });
+        getSelection();
 
         document.body.removeChild(selectionBox);
         selectionBox = null;
