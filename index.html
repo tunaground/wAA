@@ -151,6 +151,24 @@
     <button onclick="moveSelected(1, 0)">오른쪽</button>
 </div>
 <div>
+    <button onclick="addDot(' ')">Dot 1</button>
+    <button onclick="addDot(' ')">Dot 2</button>
+    <button onclick="addDot(' ')">Dot 3</button>
+    <button onclick="addDot(' ')">Dot 4</button>
+    <button onclick="addDot(' ')">Dot 5</button>
+    <button onclick="addDot('  ')">Dot 6</button>
+    <button onclick="addDot('  ')">Dot 7</button>
+    <button onclick="addDot(' ')">Dot 8</button>
+    <button onclick="addDot('  ')">Dot 9</button>
+    <button onclick="addDot('  ')">Dot 10</button>
+    <button onclick="addDot('　')">Dot 11</button>
+    <button onclick="addDot('  ')">Dot 12</button>
+    <button onclick="addDot('　 ')">Dot 13</button>
+    <button onclick="addDot('　 ')">Dot 14</button>
+    <button onclick="addDot('　 ')">Dot 15</button>
+    <button onclick="addDot('　 ')">Dot 16</button>
+</div>
+<div>
     <ul>
         <li>캔버스 오른쪽 아래를 잡고 드래그하여 캔버스 크기 변경 가능.</li>
         <li>
@@ -183,6 +201,19 @@
     const backgroundSizeSlider = document.querySelector('#backgroundSizeSlider');
     const backgroundXSlider = document.querySelector('#backgroundXSlider');
     const backgroundYSlider = document.querySelector('#backgroundYSlider');
+
+    function addDot(str) {
+        const startPos = writer.selectionStart;
+        const endPos = writer.selectionEnd;
+
+        const textBefore = writer.value.substring(0, startPos);
+        const textAfter = writer.value.substring(endPos, writer.value.length);
+
+        writer.value = textBefore + str + textAfter;
+        writer.selectionStart = writer.selectionEnd = startPos + str.length;
+
+        writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
+    }
 
     function decodeHtmlEntity(encodedStr) {
         const textArea = document.createElement('textarea');
