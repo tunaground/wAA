@@ -268,11 +268,11 @@
             background: var(--bg-primary);
             border: 2px solid var(--border);
             border-radius: 8px;
-            resize: both;
-            overflow: auto;
+            overflow: hidden;
             box-shadow: 0 4px 20px var(--shadow);
-            min-width: 400px;
-            min-height: 300px;
+            resize: both;
+            min-width: 200px;
+            min-height: 100px;
         }
 
         .bezel {
@@ -564,6 +564,16 @@
                 </div>
             </div>
 
+            <!-- Canvas Settings -->
+            <div class="panel">
+                <div class="panel-title">캔버스 설정</div>
+                <div class="control-group">
+                    <label class="control-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                        <input type="checkbox" id="fixedCanvasCheckbox"> 캔버스 크기 고정
+                    </label>
+                </div>
+            </div>
+
             <!-- Dot Characters -->
             <div class="panel">
                 <div class="panel-title">도트 문자</div>
@@ -577,6 +587,23 @@
                     <button class="dot-btn" onclick="addDot(dots[6])">도트 7</button>
                     <button class="dot-btn" onclick="addDot(dots[7])">도트 8</button>
                     <button class="dot-btn" onclick="addDot(dots[8])">도트 9</button>
+                </div>
+            </div>
+
+            <!-- Save/Load -->
+            <div class="panel">
+                <div class="panel-title">저장 / 불러오기</div>
+                <div class="control-group">
+                    <div id="currentFileDisplay" style="font-size: 0.75rem; color: var(--text-secondary); margin-bottom: 0.5rem; word-break: break-all;">새 프로젝트</div>
+                    <div class="file-input-wrapper">
+                        <button class="btn btn-primary btn-small" onclick="saveProject()">저장</button>
+                        <button class="btn btn-secondary btn-small" onclick="saveProjectAs()">다른 이름</button>
+                    </div>
+                    <div class="file-input-wrapper" style="margin-top: 0.5rem;">
+                        <button class="btn btn-secondary btn-small" onclick="openProject()">불러오기</button>
+                        <button class="btn btn-secondary btn-small" onclick="newProject()">새 프로젝트</button>
+                    </div>
+                    <input type="file" id="loadInput" accept=".waa,.json" style="display:none;"/>
                 </div>
             </div>
 
@@ -594,6 +621,10 @@
                         <li>Ctrl/Cmd + C/X/V로 복사/잘라내기/붙여넣기</li>
                         <li>Escape 또는 빈 영역 클릭으로 선택 해제</li>
                         <li>스페이스바로 도트 너비 순환</li>
+                        <li>Ctrl/Cmd + N으로 새 프로젝트</li>
+                        <li>Ctrl/Cmd + O로 불러오기</li>
+                        <li>Ctrl/Cmd + S로 저장</li>
+                        <li>Ctrl/Cmd + Shift + S로 다른 이름 저장</li>
                     </ul>
                 </div>
             </div>
@@ -650,6 +681,8 @@
 
 <script>
     let history = [];
+    let lastValidValue = '';
+    let isRestoring = false;
 
     const panel = document.querySelector('#panel');
     const writer = document.querySelector('#writer');
@@ -822,10 +855,250 @@
         updateStatus('배경 이미지 삭제됨');
     }
 
+    // Save/Load functions
+    let currentFileHandle = null;
+    let currentFileName = null;
+
+    function updateFileDisplay() {
+        const display = document.getElementById('currentFileDisplay');
+        display.textContent = currentFileName || '새 프로젝트';
+    }
+
+    function getProjectData() {
+        return {
+            version: 1,
+            content: writer.value,
+            font: {
+                size: fontSizeSlider.value
+            },
+            background: {
+                image: backgroundScreen.style.backgroundImage,
+                originalWidth: originalImageWidth,
+                originalHeight: originalImageHeight,
+                opacity: opacitySlider.value,
+                grayscale: grayscaleSlider.value,
+                size: backgroundSizeSlider.value,
+                positionX: backgroundXSlider.value,
+                positionY: backgroundYSlider.value
+            },
+            theme: document.body.getAttribute('data-theme') || 'light'
+        };
+    }
+
+    async function saveProject() {
+        const projectData = getProjectData();
+        const jsonString = JSON.stringify(projectData, null, 2);
+
+        // File System Access API 지원 시
+        if ('showSaveFilePicker' in window) {
+            try {
+                // 기존 파일 핸들이 있으면 덮어쓰기
+                if (currentFileHandle) {
+                    const writable = await currentFileHandle.createWritable();
+                    await writable.write(jsonString);
+                    await writable.close();
+                    updateStatus(`저장됨: ${currentFileName}`);
+                    updateFileDisplay();
+                    return;
+                }
+
+                // 새 파일 저장
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: 'project.waa',
+                    types: [{
+                        description: 'wAA Project',
+                        accept: { 'application/json': ['.waa'] }
+                    }]
+                });
+                currentFileHandle = handle;
+                currentFileName = handle.name;
+
+                const writable = await handle.createWritable();
+                await writable.write(jsonString);
+                await writable.close();
+                updateStatus(`저장됨: ${currentFileName}`);
+                updateFileDisplay();
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error(err);
+                    updateStatus('저장 실패');
+                }
+            }
+        } else {
+            // 폴백: 기존 다운로드 방식
+            const filename = prompt('파일 이름을 입력하세요:', currentFileName || 'project');
+            if (filename === null) return;
+
+            currentFileName = filename + '.waa';
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileName;
+            a.click();
+            URL.revokeObjectURL(url);
+            updateStatus('프로젝트 저장됨');
+            updateFileDisplay();
+        }
+    }
+
+    async function saveProjectAs() {
+        currentFileHandle = null;
+        currentFileName = null;
+        updateFileDisplay();
+        await saveProject();
+    }
+
+    function newProject() {
+        if (!confirm('현재 작업을 저장하지 않으면 잃어버립니다. 계속하시겠습니까?')) {
+            return;
+        }
+
+        // 파일 핸들 초기화
+        currentFileHandle = null;
+        currentFileName = null;
+        updateFileDisplay();
+
+        // 캔버스 초기화
+        writer.value = '';
+        lastValidValue = '';
+        writer.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+
+        // 폰트 초기화
+        fontSizeSlider.value = 16;
+        panel.style.fontSize = '16px';
+        writer.style.fontSize = '16px';
+
+        // 배경 초기화
+        clearBackground();
+        opacitySlider.value = 100;
+        backgroundScreen.style.opacity = 1;
+        grayscaleSlider.value = 0;
+        backgroundScreen.style.filter = 'grayscale(0%)';
+        backgroundSizeSlider.value = 100;
+        document.getElementById('backgroundSizeValue').textContent = '100%';
+        backgroundXSlider.value = 50;
+        backgroundScreen.style.backgroundPositionX = '50%';
+        backgroundYSlider.value = 50;
+        backgroundScreen.style.backgroundPositionY = '50%';
+
+        updateStatus('새 프로젝트');
+    }
+
+    function applyProjectData(data, filename) {
+        try {
+            // Restore content
+            writer.value = data.content || '';
+            lastValidValue = writer.value;
+            writer.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+
+            // Restore font
+            if (data.font) {
+                fontSizeSlider.value = data.font.size;
+                const fontSize = data.font.size + 'px';
+                panel.style.fontSize = fontSize;
+                writer.style.fontSize = fontSize;
+            }
+
+            // Restore background
+            if (data.background) {
+                originalImageWidth = data.background.originalWidth || 0;
+                originalImageHeight = data.background.originalHeight || 0;
+
+                if (data.background.image) {
+                    backgroundScreen.style.backgroundImage = data.background.image;
+                    if (originalImageWidth > 0) {
+                        const scale = data.background.size / 100;
+                        backgroundScreen.style.backgroundSize = `${originalImageWidth * scale}px ${originalImageHeight * scale}px`;
+                    }
+                }
+
+                opacitySlider.value = data.background.opacity;
+                backgroundScreen.style.opacity = data.background.opacity / 100;
+
+                grayscaleSlider.value = data.background.grayscale;
+                backgroundScreen.style.filter = `grayscale(${data.background.grayscale}%)`;
+
+                backgroundSizeSlider.value = data.background.size;
+                document.getElementById('backgroundSizeValue').textContent = data.background.size + '%';
+
+                backgroundXSlider.value = data.background.positionX;
+                backgroundScreen.style.backgroundPositionX = `${data.background.positionX}%`;
+
+                backgroundYSlider.value = data.background.positionY;
+                backgroundScreen.style.backgroundPositionY = `${data.background.positionY}%`;
+            }
+
+            // Restore theme
+            if (data.theme) {
+                document.body.setAttribute('data-theme', data.theme);
+                localStorage.setItem('theme', data.theme);
+            }
+
+            currentFileName = filename;
+            updateFileDisplay();
+            updateStatus(`불러옴: ${filename}`);
+        } catch (err) {
+            updateStatus('파일을 불러올 수 없습니다');
+            console.error(err);
+        }
+    }
+
+    async function openProject() {
+        // File System Access API 지원 시
+        if ('showOpenFilePicker' in window) {
+            try {
+                const [handle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'wAA Project',
+                        accept: { 'application/json': ['.waa', '.json'] }
+                    }]
+                });
+                currentFileHandle = handle;
+                const file = await handle.getFile();
+                const text = await file.text();
+                const data = JSON.parse(text);
+                applyProjectData(data, handle.name);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error(err);
+                    updateStatus('파일을 불러올 수 없습니다');
+                }
+            }
+        } else {
+            // 폴백: input 사용
+            document.getElementById('loadInput').click();
+        }
+    }
+
+    document.getElementById('loadInput').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const data = JSON.parse(evt.target.result);
+                    currentFileHandle = null; // 폴백에서는 핸들 없음
+                    applyProjectData(data, file.name);
+                } catch (err) {
+                    updateStatus('파일을 불러올 수 없습니다');
+                    console.error(err);
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+    });
+
     fontSizeSlider.addEventListener('input', function () {
         const fontSize = fontSizeSlider.value + 'px';
         panel.style.fontSize = fontSize;
         writer.style.fontSize = fontSize;
+    });
+
+    document.getElementById('fixedCanvasCheckbox').addEventListener('change', function () {
+        const canvas = document.querySelector('.canvas');
+        canvas.style.resize = this.checked ? 'none' : 'both';
     });
 
     opacitySlider.addEventListener('input', function () {
@@ -885,6 +1158,28 @@
                 })
                 updateStatus('전체 선택됨');
             }
+        }
+
+        // Ctrl+S: 저장, Ctrl+Shift+S: 다른 이름으로 저장
+        if ((event.ctrlKey || event.metaKey) && event.key === 's') {
+            event.preventDefault();
+            if (event.shiftKey) {
+                saveProjectAs();
+            } else {
+                saveProject();
+            }
+        }
+
+        // Ctrl+O: 불러오기
+        if ((event.ctrlKey || event.metaKey) && event.key === 'o') {
+            event.preventDefault();
+            openProject();
+        }
+
+        // Ctrl+N: 새 프로젝트
+        if ((event.ctrlKey || event.metaKey) && event.key === 'n') {
+            event.preventDefault();
+            newProject();
         }
     });
 
@@ -1172,6 +1467,24 @@
 
         panel.innerHTML = panelResult;
         updateSelectionUI();
+
+        // 캔버스 크기 고정 시 범위 초과 체크
+        const fixedCanvas = document.getElementById('fixedCanvasCheckbox').checked;
+        if (fixedCanvas && !isRestoring) {
+            const bezel = document.querySelector('.bezel');
+            if (panel.scrollHeight > bezel.clientHeight || panel.scrollWidth > bezel.clientWidth) {
+                // 초과 시 이전 값으로 복원
+                isRestoring = true;
+                writer.value = lastValidValue;
+                writer.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
+                isRestoring = false;
+                updateStatus('캔버스 범위를 초과했습니다');
+                return;
+            }
+        }
+        if (!isRestoring) {
+            lastValidValue = writer.value;
+        }
     });
 
     let isDragging = false;
