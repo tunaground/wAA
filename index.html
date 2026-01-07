@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>wAA</title>
+    <title>wAA - ASCII Art Editor</title>
     <style>
         @font-face {
             font-family: "Saitamaar";
@@ -20,57 +20,275 @@
             unicode-range: U+AC00-D7A3, U+3130-318F;
         }
 
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --bg-tertiary: #eeeeee;
+            --accent: #2196f3;
+            --accent-hover: #1976d2;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --border: #e0e0e0;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #121212;
+            --bg-secondary: #1e1e1e;
+            --bg-tertiary: #2a2a2a;
+            --accent: #2196f3;
+            --accent-hover: #42a5f5;
+            --text-primary: #e0e0e0;
+            --text-secondary: #888888;
+            --border: #333333;
+            --shadow: rgba(0, 0, 0, 0.5);
+        }
+
         body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
         }
 
-        .char {
-            background-color: rgba(0, 0, 255, 0.1);
+        /* Header */
+        header {
+            background: var(--bg-secondary);
+            padding: 1rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .char::selection {
-            background-color: transparent;
-            color: inherit;
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--accent);
         }
 
-        .eof {
-            background-color: rgba(0, 255, 255, 0.1);
+        header p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
         }
 
-        .selection-box {
-            position: absolute;
-            border: 1px dashed rgba(0, 0, 0, 0.5);
-            background-color: rgba(0, 0, 0, 0.1);
-            pointer-events: none;
-            z-index: 3;
+        /* Main Container */
+        .main-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
         }
 
-        .highlight {
-            background-color: rgba(255, 0, 0, 0.3);
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-secondary);
+            border-right: 1px solid var(--border);
+            padding: 1rem;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .panel {
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .panel-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .control-group {
+            margin-bottom: 0.75rem;
+        }
+
+        .control-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .control-label {
+            display: block;
+            font-size: 0.8125rem;
+            margin-bottom: 0.375rem;
+            color: var(--text-primary);
+        }
+
+        /* Input styling */
+        input[type="range"] {
+            width: 100%;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            outline: none;
+            -webkit-appearance: none;
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            background: var(--accent);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: transform 0.15s ease;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-input-wrapper {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: all 0.15s ease;
+        }
+
+        .btn-primary {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-hover);
+        }
+
+        .btn-secondary {
+            background: var(--border);
+            color: var(--text-primary);
+        }
+
+        .btn-secondary:hover {
+            background: #3a3a5a;
+        }
+
+        .btn-small {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.75rem;
+        }
+
+        /* Toolbar */
+        .toolbar {
+            background: var(--bg-secondary);
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .toolbar-group {
+            display: flex;
+            gap: 0.25rem;
+            padding-right: 0.75rem;
+            border-right: 1px solid var(--border);
+        }
+
+        .toolbar-group:last-child {
+            border-right: none;
+        }
+
+        .toolbar-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.875rem;
+            transition: all 0.15s ease;
+        }
+
+        .toolbar-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .toolbar-btn svg {
+            width: 16px;
+            height: 16px;
+        }
+
+        /* Canvas Area */
+        .canvas-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .canvas-wrapper {
+            flex: 1;
+            padding: 1rem;
+            overflow: auto;
+            background:
+                linear-gradient(90deg, var(--border) 1px, transparent 1px),
+                linear-gradient(var(--border) 1px, transparent 1px);
+            background-size: 20px 20px;
         }
 
         .canvas {
             display: flex;
-            width: 1000px;
-            height: 1000px;
-            border: solid 1px black;
+            width: 800px;
+            height: 600px;
+            background: var(--bg-primary);
+            border: 2px solid var(--border);
+            border-radius: 8px;
             resize: both;
             overflow: auto;
+            box-shadow: 0 4px 20px var(--shadow);
+            min-width: 400px;
+            min-height: 300px;
         }
 
         .bezel {
-            flex-grow: 1;
+            flex: 1;
             position: relative;
-            margin: 1em;
+            margin: 2px;
         }
 
         .screen {
             position: absolute;
             width: 100%;
             height: 100%;
-            font-family: 'Saitamaar', sans-serif;
+            font-family: 'Saitamaar', monospace;
             font-size: 16px;
             margin: 0;
-            padding: 0;
+            padding: 2px;
             border: 0;
             line-height: 1.125em;
         }
@@ -79,15 +297,19 @@
             z-index: 3;
             user-select: none;
             overflow: hidden;
-            background-color: rgba(0, 0, 0, 0.1);
+            background-color: transparent;
+            color: var(--text-primary);
+            white-space: pre;
         }
-
 
         #writer {
             overflow-x: scroll;
             z-index: 2;
             resize: none;
             background-color: transparent;
+            color: transparent;
+            caret-color: var(--accent);
+            outline: none;
         }
 
         #backgroundScreen {
@@ -96,102 +318,329 @@
             background-repeat: no-repeat;
             background-position: center;
         }
+
+        /* Character styling */
+        .char {
+            transition: background-color 0.1s ease;
+        }
+
+        .show-grid .char:nth-child(odd) {
+            background-color: rgba(255, 0, 0, 0.25);
+        }
+
+        .show-grid .char:nth-child(even) {
+            background-color: rgba(0, 100, 255, 0.25);
+        }
+
+        .char::selection {
+            background-color: transparent;
+            color: inherit;
+        }
+
+        .eof {
+            color: var(--text-secondary);
+            opacity: 0.3;
+        }
+
+        .selection-box {
+            position: absolute;
+            border: 2px solid var(--accent);
+            background-color: rgba(233, 69, 96, 0.15);
+            pointer-events: none;
+            z-index: 100;
+            border-radius: 2px;
+        }
+
+        .highlight {
+            background-color: rgba(233, 69, 96, 0.4);
+            border-radius: 2px;
+        }
+
+        /* Dots Panel */
+        .dots-panel {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.25rem;
+        }
+
+        .dot-btn {
+            padding: 0.5rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-primary);
+            cursor: pointer;
+            font-size: 0.6875rem;
+            transition: all 0.15s ease;
+        }
+
+        .dot-btn:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Help section */
+        .help-section {
+            margin-top: auto;
+        }
+
+        .help-toggle {
+            width: 100%;
+            text-align: left;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.8125rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .help-toggle:hover {
+            color: var(--text-primary);
+        }
+
+        .help-content {
+            display: none;
+            padding: 0.75rem;
+            background: var(--bg-tertiary);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+
+        .help-content.active {
+            display: block;
+        }
+
+        .help-content ul {
+            list-style: none;
+            font-size: 0.75rem;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+
+        .help-content li {
+            margin-bottom: 0.5rem;
+            padding-left: 1rem;
+            position: relative;
+        }
+
+        .help-content li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            color: var(--accent);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
+        }
+
+        /* Status bar */
+        .status-bar {
+            background: var(--bg-secondary);
+            padding: 0.5rem 1rem;
+            border-top: 1px solid var(--border);
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Theme toggle */
+        .theme-toggle {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 0.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+
+        .theme-toggle:hover {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .icon-moon { display: none; }
+        .icon-sun { display: block; }
+
+        [data-theme="dark"] .icon-moon { display: block; }
+        [data-theme="dark"] .icon-sun { display: none; }
     </style>
 </head>
 <body>
-<header>
-    <h1>wAA(PoC)</h1>
-    <p>재미로 만들어보는 웹기반 AA 편집기</p>
-</header>
-
-<div>
-    <div>
-        배경그림 삽입
-        <input type="file" id="backgroundInput" accept="image/*"/>
-        <button onclick="clearBackground()">파일 선택 취소</button>
-    </div>
-    <div>
-        배경그림 투명도
-        <input type="range" id="opacitySlider" min="0" max="100" value="100">
-    </div>
-    <div>
-        배경그림 회색조
-        <input type="range" id="grayscaleSlider" min="0" max="100" value="0">
-    </div>
-    <div>
-        배경그림 크기
-        <input type="range" id="backgroundSizeSlider" min="50" max="200" value="100">
-    </div>
-    <div>
-        배경그림 가로 위치
-        <input type="range" id="backgroundXSlider" min="0" max="100" value="50">
-    </div>
-    <div>
-        배경그림 세로 위치
-        <input type="range" id="backgroundYSlider" min="0" max="100" value="50">
-    </div>
-    <div>
-        글꼴 크기
-        <input type="range" id="fontSizeSlider" min="16" max="64" value="16">
-    </div>
-</div>
-<div>
-    <div class="canvas">
-        <div class="bezel">
-            <div id="panel" class="screen" onclick="focusWriter()"></div>
-            <textarea id="writer" class="screen" spellcheck="false"></textarea>
-            <div id="backgroundScreen" class="screen"></div>
+    <header>
+        <div>
+            <h1>wAA</h1>
+            <p>Web ASCII Art Editor</p>
         </div>
+        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+            <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+    </header>
+
+    <div class="main-container">
+        <aside class="sidebar">
+            <!-- Background Controls -->
+            <div class="panel">
+                <div class="panel-title">Background Image</div>
+                <div class="control-group">
+                    <div class="file-input-wrapper">
+                        <label class="btn btn-primary btn-small" for="backgroundInput">
+                            Choose File
+                        </label>
+                        <button class="btn btn-secondary btn-small" onclick="clearBackground()">Clear</button>
+                    </div>
+                    <input type="file" id="backgroundInput" accept="image/*"/>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Opacity</label>
+                    <input type="range" id="opacitySlider" min="0" max="100" value="100">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Grayscale</label>
+                    <input type="range" id="grayscaleSlider" min="0" max="100" value="0">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Size</label>
+                    <input type="range" id="backgroundSizeSlider" min="50" max="200" value="100">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">X Position</label>
+                    <input type="range" id="backgroundXSlider" min="0" max="100" value="50">
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Y Position</label>
+                    <input type="range" id="backgroundYSlider" min="0" max="100" value="50">
+                </div>
+            </div>
+
+            <!-- Font Controls -->
+            <div class="panel">
+                <div class="panel-title">Font Settings</div>
+                <div class="control-group">
+                    <label class="control-label">Font Size</label>
+                    <input type="range" id="fontSizeSlider" min="8" max="64" value="16">
+                </div>
+            </div>
+
+            <!-- Dot Characters -->
+            <div class="panel">
+                <div class="panel-title">Dot Characters</div>
+                <div class="dots-panel">
+                    <button class="dot-btn" onclick="addDot(' ')">Dot 1</button>
+                    <button class="dot-btn" onclick="addDot(' ')">Dot 2</button>
+                    <button class="dot-btn" onclick="addDot(' ')">Dot 3</button>
+                    <button class="dot-btn" onclick="addDot(' ')">Dot 4</button>
+                    <button class="dot-btn" onclick="addDot(' ')">Dot 5</button>
+                    <button class="dot-btn" onclick="addDot('  ')">Dot 6</button>
+                    <button class="dot-btn" onclick="addDot('  ')">Dot 7</button>
+                    <button class="dot-btn" onclick="addDot(' ')">Dot 8</button>
+                    <button class="dot-btn" onclick="addDot('  ')">Dot 9</button>
+                    <button class="dot-btn" onclick="addDot('  ')">Dot 10</button>
+                    <button class="dot-btn" onclick="addDot('　')">Dot 11</button>
+                    <button class="dot-btn" onclick="addDot('  ')">Dot 12</button>
+                    <button class="dot-btn" onclick="addDot('　 ')">Dot 13</button>
+                    <button class="dot-btn" onclick="addDot('　 ')">Dot 14</button>
+                    <button class="dot-btn" onclick="addDot('　 ')">Dot 15</button>
+                    <button class="dot-btn" onclick="addDot('　 ')">Dot 16</button>
+                </div>
+            </div>
+
+            <!-- Help -->
+            <div class="help-section">
+                <button class="help-toggle" onclick="toggleHelp()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                    Help & Shortcuts
+                </button>
+                <div class="help-content" id="helpContent">
+                    <ul>
+                        <li>Drag canvas corner to resize</li>
+                        <li>Click and drag to select characters</li>
+                        <li>Shift + Arrow keys to move selection</li>
+                        <li>Ctrl/Cmd + A to select all (in selection mode)</li>
+                        <li>Ctrl/Cmd + C/X/V for copy/cut/paste</li>
+                        <li>Click empty area to deselect</li>
+                    </ul>
+                </div>
+            </div>
+        </aside>
+
+        <main class="canvas-container">
+            <!-- Toolbar -->
+            <div class="toolbar">
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" onclick="moveSelected(-1, 0)" title="Move Left">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                    </button>
+                    <button class="toolbar-btn" onclick="moveSelected(1, 0)" title="Move Right">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+                    </button>
+                    <button class="toolbar-btn" onclick="moveSelected(0, -1)" title="Move Up">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+                    </button>
+                    <button class="toolbar-btn" onclick="moveSelected(0, 1)" title="Move Down">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+                    </button>
+                </div>
+                <div class="toolbar-group">
+                    <button class="toolbar-btn" id="gridToggle" onclick="toggleGrid()" title="Toggle Character Grid">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Canvas -->
+            <div class="canvas-wrapper">
+                <div class="canvas">
+                    <div class="bezel">
+                        <div id="panel" class="screen" onclick="focusWriter()"></div>
+                        <textarea id="writer" class="screen" spellcheck="false"></textarea>
+                        <div id="backgroundScreen" class="screen"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <span id="statusText">Ready</span>
+                <span id="cursorPosition">Ln 0, Col 0</span>
+            </div>
+        </main>
     </div>
-</div>
-<div>
-    <button onclick="moveSelected(-1, 0)">왼쪽</button>
-    <button onclick="moveSelected(0, 1)">아래쪽</button>
-    <button onclick="moveSelected(0, -1)">위쪽</button>
-    <button onclick="moveSelected(1, 0)">오른쪽</button>
-</div>
-<div>
-    <button onclick="addDot(' ')">Dot 1</button>
-    <button onclick="addDot(' ')">Dot 2</button>
-    <button onclick="addDot(' ')">Dot 3</button>
-    <button onclick="addDot(' ')">Dot 4</button>
-    <button onclick="addDot(' ')">Dot 5</button>
-    <button onclick="addDot('  ')">Dot 6</button>
-    <button onclick="addDot('  ')">Dot 7</button>
-    <button onclick="addDot(' ')">Dot 8</button>
-    <button onclick="addDot('  ')">Dot 9</button>
-    <button onclick="addDot('  ')">Dot 10</button>
-    <button onclick="addDot('　')">Dot 11</button>
-    <button onclick="addDot('  ')">Dot 12</button>
-    <button onclick="addDot('　 ')">Dot 13</button>
-    <button onclick="addDot('　 ')">Dot 14</button>
-    <button onclick="addDot('　 ')">Dot 15</button>
-    <button onclick="addDot('　 ')">Dot 16</button>
-</div>
-<div>
-    <ul>
-        <li>캔버스 오른쪽 아래를 잡고 드래그하여 캔버스 크기 변경 가능.</li>
-        <li>
-            Selection 모드
-            <ul>
-                <li>문자나 문자열을 선택한 상태.</li>
-                <li>특정 문자를 클릭하거나 패널에서 마우스를 드래그하여 문자열을 선택할 수 있다.</li>
-                <li>문자 중 빨간색 배경으로 칠해진 게 하나라도 있는 경우 Selection 모드임.</li>
-                <li>셀렉션 모드 중에는 복사/잘라내기/붙여넣기가 셀렉션에 맞춰 동작한다.</li>
-                <li>패널의 비어있는 부분(회색 부분)을 클릭하면 셀렉션 모드가 해제된다.</li>
-                <li>현재 셀렉션 모드에선 Ctrl + Z(Undo)가 되지 않으니 주의.</li>
-            </ul>
-        </li>
-        <li>커서가 활성화된 상태에서 Shift + 방향키를 통해 일반적인 문자열 선택 기능.</li>
-        <li>패널의 가로폭보다 긴 내용을 입력하면 화면이 깨진다. 이 경우 캔버스를 내용길이만큼 늘려주면 된다.</li>
-    </ul>
-</div>
+
 <script>
     let history = [];
 
     const panel = document.querySelector('#panel');
     const writer = document.querySelector('#writer');
     const backgroundScreen = document.querySelector('#backgroundScreen');
+    const statusText = document.querySelector('#statusText');
+    const cursorPosition = document.querySelector('#cursorPosition');
 
     const backgroundInput = document.querySelector('#backgroundInput');
 
@@ -202,7 +651,67 @@
     const backgroundXSlider = document.querySelector('#backgroundXSlider');
     const backgroundYSlider = document.querySelector('#backgroundYSlider');
 
+    function toggleHelp() {
+        const helpContent = document.getElementById('helpContent');
+        helpContent.classList.toggle('active');
+    }
+
+    function toggleGrid() {
+        panel.classList.toggle('show-grid');
+        const isOn = panel.classList.contains('show-grid');
+        document.getElementById('gridToggle').style.background = isOn ? 'var(--accent)' : '';
+        updateStatus(isOn ? 'Character grid ON' : 'Character grid OFF');
+    }
+
+    function updateStatus(text) {
+        statusText.textContent = text;
+    }
+
+    function updateCursorPosition() {
+        const pos = writer.selectionStart;
+        const text = writer.value.substring(0, pos);
+        const lines = text.split('\n');
+        const line = lines.length;
+        const col = lines[lines.length - 1].length;
+        cursorPosition.textContent = `Ln ${line}, Col ${col}`;
+    }
+
+    writer.addEventListener('click', updateCursorPosition);
+    writer.addEventListener('keyup', updateCursorPosition);
+
+    // Dot characters array
+    const dots = [
+        ' ', ' ', ' ', ' ', ' ',   // Dot 1-5
+        '  ', '  ', ' ', '  ', '  ', // Dot 6-10
+        '　', '  ', '　 ', '　 ', '　 ', '　 ' // Dot 11-16
+    ];
+
+    // Space sequence state
+    let spaceIndex = 0;
+    let spaceStartPos = -1;
+    let currentDotLength = 0;
+
+    function resetSpaceSequence() {
+        spaceIndex = 0;
+        spaceStartPos = -1;
+        currentDotLength = 0;
+    }
+
+    function getDotString(index) {
+        const cycleCount = Math.floor(index / 16);
+        const dotIndex = index % 16;
+        let result = '';
+        for (let i = 0; i < cycleCount; i++) {
+            result += dots[15]; // dot 16
+        }
+        result += dots[dotIndex];
+        return result;
+    }
+
     function addDot(str) {
+        writer.focus();
+        resetSpaceSequence();
+
         const startPos = writer.selectionStart;
         const endPos = writer.selectionEnd;
 
@@ -213,7 +722,43 @@
         writer.selectionStart = writer.selectionEnd = startPos + str.length;
 
         writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
+        updateStatus('Dot character inserted');
     }
+
+    // Spacebar handler
+    writer.addEventListener('keydown', function(e) {
+        if (e.key === ' ') {
+            e.preventDefault();
+
+            const currentPos = writer.selectionStart;
+
+            // Check if continuing from previous dot sequence
+            if (spaceStartPos === -1) {
+                spaceStartPos = currentPos;
+            } else if (currentPos !== spaceStartPos + currentDotLength) {
+                resetSpaceSequence();
+                spaceStartPos = currentPos;
+            }
+
+            // Remove previous dot string
+            const textBefore = writer.value.substring(0, spaceStartPos);
+            const textAfter = writer.value.substring(spaceStartPos + currentDotLength);
+
+            // Get new dot string
+            const newDotStr = getDotString(spaceIndex);
+            currentDotLength = newDotStr.length;
+
+            writer.value = textBefore + newDotStr + textAfter;
+            writer.selectionStart = writer.selectionEnd = spaceStartPos + currentDotLength;
+
+            spaceIndex++;
+
+            writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
+            updateStatus(`Dot ${(spaceIndex - 1) % 16 + 1} (cycle ${Math.floor((spaceIndex - 1) / 16) + 1})`);
+        } else if (!e.ctrlKey && !e.metaKey && !e.altKey) {
+            resetSpaceSequence();
+        }
+    });
 
     function decodeHtmlEntity(encodedStr) {
         const textArea = document.createElement('textarea');
@@ -224,6 +769,7 @@
     function clearBackground() {
         backgroundInput.value = '';
         backgroundScreen.style.backgroundImage = '';
+        updateStatus('Background cleared');
     }
 
     fontSizeSlider.addEventListener('input', function () {
@@ -258,6 +804,7 @@
             const reader = new FileReader();
             reader.onload = function (e) {
                 backgroundScreen.style.backgroundImage = `url(${e.target.result})`;
+                updateStatus('Background image loaded');
             };
             reader.readAsDataURL(file);
         }
@@ -273,6 +820,7 @@
                 chars.forEach(c => {
                     c.classList.add('highlight');
                 })
+                updateStatus('All characters selected');
             }
         }
     });
@@ -326,6 +874,7 @@
             });
 
             event.clipboardData.setData("application/json", JSON.stringify(v));
+            updateStatus('Selection copied');
         }
     });
 
@@ -354,6 +903,7 @@
             writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
 
             event.clipboardData.setData("application/json", JSON.stringify(v));
+            updateStatus('Selection cut');
         }
     });
 
@@ -378,6 +928,7 @@
 
                 writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
             });
+            updateStatus('Content pasted');
         }
     });
 
@@ -443,6 +994,7 @@
                         }
                     });
                 })
+                updateStatus('Selection moved');
             } catch (e) {
                 writer.value = contentBackup
                 writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
@@ -455,6 +1007,7 @@
                         }
                     });
                 })
+                updateStatus('Cannot move selection here');
             }
         }
     }
@@ -463,12 +1016,16 @@
         const highlight = document.querySelector('.highlight');
         if (highlight !== null) {
             if (event.shiftKey && event.key === 'ArrowLeft') {
+                event.preventDefault();
                 moveSelected(-1, 0);
             } else if (event.shiftKey && event.key === 'ArrowDown') {
+                event.preventDefault();
                 moveSelected(0, 1);
             } else if (event.shiftKey && event.key === 'ArrowUp') {
+                event.preventDefault();
                 moveSelected(0, -1);
             } else if (event.shiftKey && event.key === 'ArrowRight') {
+                event.preventDefault();
                 moveSelected(1, 0);
             }
         }
@@ -507,7 +1064,7 @@
                 panelResult += '<span class="char" data-line="' + lineIndex + '" data-column="' + columnIndex + '" data-position="' + position++ + '">' + columnSplit[columnIndex] + '</span>'
             }
             if (lineIndex + 1 < lineSplit.length) {
-                panelResult += '<span class="char eof" data-line="' + lineIndex + '" data-column="' + columnIndex + '" data-position="' + position++ + '">^<br /></span>'
+                panelResult += '<span class="char eof" data-line="' + lineIndex + '" data-column="' + columnIndex + '" data-position="' + position++ + '">&#8629;<br /></span>'
             }
         }
 
@@ -565,16 +1122,22 @@
 
         const selectionRect = selectionBox.getBoundingClientRect();
         const chars = document.querySelectorAll('.char');
+        let selectedCount = 0;
 
         chars.forEach(c => {
             const cRect = c.getBoundingClientRect();
             if (isOverlap(selectionRect, cRect)) {
                 c.classList.add('highlight');
+                selectedCount++;
             } else {
                 c.classList.remove('highlight');
             }
         });
         getSelection();
+
+        if (selectedCount > 0) {
+            updateStatus(`${selectedCount} characters selected`);
+        }
 
         document.body.removeChild(selectionBox);
         selectionBox = null;
@@ -586,6 +1149,27 @@
             rect1.bottom < rect2.top ||
             rect1.top > rect2.bottom);
     }
+
+    // Theme toggle
+    function toggleTheme() {
+        const body = document.body;
+        if (body.getAttribute('data-theme') === 'dark') {
+            body.removeAttribute('data-theme');
+            localStorage.setItem('theme', 'light');
+        } else {
+            body.setAttribute('data-theme', 'dark');
+            localStorage.setItem('theme', 'dark');
+        }
+    }
+
+    // Load saved theme
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme === 'dark') {
+        document.body.setAttribute('data-theme', 'dark');
+    }
+
+    // Initialize
+    updateStatus('Ready - Click on canvas to start editing');
 </script>
 </body>
 </html>
