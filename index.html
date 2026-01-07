@@ -303,13 +303,14 @@
         }
 
         #writer {
-            overflow-x: scroll;
+            overflow: hidden;
             z-index: 2;
             resize: none;
             background-color: transparent;
             color: transparent;
             caret-color: var(--accent);
             outline: none;
+            white-space: pre;
         }
 
         #backgroundScreen {
@@ -545,14 +546,6 @@
                     <label class="control-label">크기 <span id="backgroundSizeValue">100%</span></label>
                     <input type="range" id="backgroundSizeSlider" min="10" max="500" value="100">
                 </div>
-                <div class="control-group">
-                    <label class="control-label">X 위치</label>
-                    <input type="range" id="backgroundXSlider" min="0" max="100" value="50">
-                </div>
-                <div class="control-group">
-                    <label class="control-label">Y 위치</label>
-                    <input type="range" id="backgroundYSlider" min="0" max="100" value="50">
-                </div>
             </div>
 
             <!-- Font Controls -->
@@ -561,16 +554,6 @@
                 <div class="control-group">
                     <label class="control-label">폰트 크기</label>
                     <input type="range" id="fontSizeSlider" min="8" max="64" value="16">
-                </div>
-            </div>
-
-            <!-- Canvas Settings -->
-            <div class="panel">
-                <div class="panel-title">캔버스 설정</div>
-                <div class="control-group">
-                    <label class="control-label" style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
-                        <input type="checkbox" id="fixedCanvasCheckbox"> 캔버스 크기 고정
-                    </label>
                 </div>
             </div>
 
@@ -696,9 +679,7 @@
     const opacitySlider = document.querySelector('#opacitySlider');
     const grayscaleSlider = document.querySelector('#grayscaleSlider');
     const backgroundSizeSlider = document.querySelector('#backgroundSizeSlider');
-    const backgroundXSlider = document.querySelector('#backgroundXSlider');
-    const backgroundYSlider = document.querySelector('#backgroundYSlider');
-
+    
     let originalImageWidth = 0;
     let originalImageHeight = 0;
 
@@ -877,9 +858,7 @@
                 originalHeight: originalImageHeight,
                 opacity: opacitySlider.value,
                 grayscale: grayscaleSlider.value,
-                size: backgroundSizeSlider.value,
-                positionX: backgroundXSlider.value,
-                positionY: backgroundYSlider.value
+                size: backgroundSizeSlider.value
             },
             theme: document.body.getAttribute('data-theme') || 'light'
         };
@@ -977,10 +956,6 @@
         backgroundScreen.style.filter = 'grayscale(0%)';
         backgroundSizeSlider.value = 100;
         document.getElementById('backgroundSizeValue').textContent = '100%';
-        backgroundXSlider.value = 50;
-        backgroundScreen.style.backgroundPositionX = '50%';
-        backgroundYSlider.value = 50;
-        backgroundScreen.style.backgroundPositionY = '50%';
 
         updateStatus('새 프로젝트');
     }
@@ -1022,11 +997,13 @@
                 backgroundSizeSlider.value = data.background.size;
                 document.getElementById('backgroundSizeValue').textContent = data.background.size + '%';
 
-                backgroundXSlider.value = data.background.positionX;
-                backgroundScreen.style.backgroundPositionX = `${data.background.positionX}%`;
-
-                backgroundYSlider.value = data.background.positionY;
-                backgroundScreen.style.backgroundPositionY = `${data.background.positionY}%`;
+                // 캔버스 크기 조정
+                if (originalImageWidth > 0) {
+                    const scale = data.background.size / 100;
+                    const canvas = document.querySelector('.canvas');
+                    canvas.style.width = (originalImageWidth * scale) + 'px';
+                    canvas.style.height = (originalImageHeight * scale) + 'px';
+                }
             }
 
             // Restore theme
@@ -1096,11 +1073,6 @@
         writer.style.fontSize = fontSize;
     });
 
-    document.getElementById('fixedCanvasCheckbox').addEventListener('change', function () {
-        const canvas = document.querySelector('.canvas');
-        canvas.style.resize = this.checked ? 'none' : 'both';
-    });
-
     opacitySlider.addEventListener('input', function () {
         backgroundScreen.style.opacity = opacitySlider.value / 100;
     });
@@ -1113,18 +1085,13 @@
         document.getElementById('backgroundSizeValue').textContent = backgroundSizeSlider.value + '%';
         if (originalImageWidth > 0) {
             const scale = backgroundSizeSlider.value / 100;
-            backgroundScreen.style.backgroundSize = `${originalImageWidth * scale}px ${originalImageHeight * scale}px`;
+            const canvas = document.querySelector('.canvas');
+            canvas.style.width = (originalImageWidth * scale) + 'px';
+            canvas.style.height = (originalImageHeight * scale) + 'px';
         }
     })
 
-    backgroundXSlider.addEventListener('input', function () {
-        backgroundScreen.style.backgroundPositionX = `${backgroundXSlider.value}%`;
-    })
-
-    backgroundYSlider.addEventListener('input', function () {
-        backgroundScreen.style.backgroundPositionY = `${backgroundYSlider.value}%`;
-    })
-
+    
     backgroundInput.addEventListener('change', function (event) {
         const file = event.target.files[0];
         if (file) {
@@ -1135,7 +1102,13 @@
                     originalImageWidth = img.naturalWidth;
                     originalImageHeight = img.naturalHeight;
                     backgroundScreen.style.backgroundImage = `url(${e.target.result})`;
-                    backgroundScreen.style.backgroundSize = `${originalImageWidth}px ${originalImageHeight}px`;
+
+                    // 캔버스 크기를 이미지에 맞춤
+                    const canvas = document.querySelector('.canvas');
+                    canvas.style.width = originalImageWidth + 'px';
+                    canvas.style.height = originalImageHeight + 'px';
+                    backgroundScreen.style.backgroundSize = '100% 100%';
+
                     backgroundSizeSlider.value = 100;
                     document.getElementById('backgroundSizeValue').textContent = '100%';
                     updateStatus('배경 이미지 로드됨');
@@ -1468,21 +1441,19 @@
         panel.innerHTML = panelResult;
         updateSelectionUI();
 
-        // 캔버스 크기 고정 시 범위 초과 체크
-        const fixedCanvas = document.getElementById('fixedCanvasCheckbox').checked;
-        if (fixedCanvas && !isRestoring) {
+        // 캔버스 범위 초과 체크
+        if (!isRestoring) {
             const bezel = document.querySelector('.bezel');
-            if (panel.scrollHeight > bezel.clientHeight || panel.scrollWidth > bezel.clientWidth) {
-                // 초과 시 이전 값으로 복원
+            const overflowHeight = writer.scrollHeight > bezel.clientHeight;
+            const overflowWidth = writer.scrollWidth > bezel.clientWidth;
+
+            if (overflowHeight || overflowWidth) {
                 isRestoring = true;
                 writer.value = lastValidValue;
                 writer.dispatchEvent(new Event('input', { bubbles: true, cancelable: true }));
                 isRestoring = false;
-                updateStatus('캔버스 범위를 초과했습니다');
                 return;
             }
-        }
-        if (!isRestoring) {
             lastValidValue = writer.value;
         }
     });
