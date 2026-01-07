@@ -267,7 +267,6 @@
             height: 600px;
             background: var(--bg-primary);
             border: 2px solid var(--border);
-            border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 4px 20px var(--shadow);
             resize: both;
@@ -318,6 +317,14 @@
             background-size: auto;
             background-repeat: no-repeat;
             background-position: center;
+        }
+
+        #marginGuide {
+            position: absolute;
+            z-index: 0;
+            pointer-events: none;
+            box-sizing: border-box;
+            border: 1px dashed var(--border);
         }
 
         /* Character styling */
@@ -546,6 +553,10 @@
                     <label class="control-label">크기 <span id="backgroundSizeValue">100%</span></label>
                     <input type="range" id="backgroundSizeSlider" min="10" max="500" value="100">
                 </div>
+                <div class="control-group">
+                    <label class="control-label">여백 <span id="marginValue">20px</span></label>
+                    <input type="range" id="marginSlider" min="0" max="100" value="20">
+                </div>
             </div>
 
             <!-- Font Controls -->
@@ -650,6 +661,7 @@
                         <div id="panel" class="screen" onclick="focusWriter()"></div>
                         <textarea id="writer" class="screen" spellcheck="false"></textarea>
                         <div id="backgroundScreen" class="screen"></div>
+                        <div id="marginGuide"></div>
                     </div>
                 </div>
             </div>
@@ -679,9 +691,26 @@
     const opacitySlider = document.querySelector('#opacitySlider');
     const grayscaleSlider = document.querySelector('#grayscaleSlider');
     const backgroundSizeSlider = document.querySelector('#backgroundSizeSlider');
-    
+    const marginSlider = document.querySelector('#marginSlider');
+    const marginGuide = document.querySelector('#marginGuide');
+
     let originalImageWidth = 0;
     let originalImageHeight = 0;
+
+    function updateMarginGuide() {
+        const margin = parseInt(marginSlider.value);
+        const bezel = document.querySelector('.bezel');
+        marginGuide.style.top = margin + 'px';
+        marginGuide.style.left = margin + 'px';
+        marginGuide.style.width = (bezel.clientWidth - margin * 2) + 'px';
+        marginGuide.style.height = (bezel.clientHeight - margin * 2) + 'px';
+
+        // 배경 이미지 위치 조정
+        backgroundScreen.style.top = margin + 'px';
+        backgroundScreen.style.left = margin + 'px';
+        backgroundScreen.style.width = (bezel.clientWidth - margin * 2) + 'px';
+        backgroundScreen.style.height = (bezel.clientHeight - margin * 2) + 'px';
+    }
 
     function toggleHelp() {
         const helpContent = document.getElementById('helpContent');
@@ -858,7 +887,8 @@
                 originalHeight: originalImageHeight,
                 opacity: opacitySlider.value,
                 grayscale: grayscaleSlider.value,
-                size: backgroundSizeSlider.value
+                size: backgroundSizeSlider.value,
+                margin: marginSlider.value
             },
             theme: document.body.getAttribute('data-theme') || 'light'
         };
@@ -956,6 +986,9 @@
         backgroundScreen.style.filter = 'grayscale(0%)';
         backgroundSizeSlider.value = 100;
         document.getElementById('backgroundSizeValue').textContent = '100%';
+        marginSlider.value = 20;
+        document.getElementById('marginValue').textContent = '20px';
+        updateMarginGuide();
 
         updateStatus('새 프로젝트');
     }
@@ -997,13 +1030,18 @@
                 backgroundSizeSlider.value = data.background.size;
                 document.getElementById('backgroundSizeValue').textContent = data.background.size + '%';
 
+                const margin = data.background.margin || 20;
+                marginSlider.value = margin;
+                document.getElementById('marginValue').textContent = margin + 'px';
+
                 // 캔버스 크기 조정
                 if (originalImageWidth > 0) {
                     const scale = data.background.size / 100;
                     const canvas = document.querySelector('.canvas');
-                    canvas.style.width = (originalImageWidth * scale) + 'px';
-                    canvas.style.height = (originalImageHeight * scale) + 'px';
+                    canvas.style.width = (originalImageWidth * scale + margin * 2) + 'px';
+                    canvas.style.height = (originalImageHeight * scale + margin * 2) + 'px';
                 }
+                updateMarginGuide();
             }
 
             // Restore theme
@@ -1085,13 +1123,26 @@
         document.getElementById('backgroundSizeValue').textContent = backgroundSizeSlider.value + '%';
         if (originalImageWidth > 0) {
             const scale = backgroundSizeSlider.value / 100;
+            const margin = parseInt(marginSlider.value);
             const canvas = document.querySelector('.canvas');
-            canvas.style.width = (originalImageWidth * scale) + 'px';
-            canvas.style.height = (originalImageHeight * scale) + 'px';
+            canvas.style.width = (originalImageWidth * scale + margin * 2) + 'px';
+            canvas.style.height = (originalImageHeight * scale + margin * 2) + 'px';
+            updateMarginGuide();
         }
-    })
+    });
 
-    
+    marginSlider.addEventListener('input', function () {
+        const margin = parseInt(marginSlider.value);
+        document.getElementById('marginValue').textContent = margin + 'px';
+        if (originalImageWidth > 0) {
+            const scale = backgroundSizeSlider.value / 100;
+            const canvas = document.querySelector('.canvas');
+            canvas.style.width = (originalImageWidth * scale + margin * 2) + 'px';
+            canvas.style.height = (originalImageHeight * scale + margin * 2) + 'px';
+        }
+        updateMarginGuide();
+    });
+
     backgroundInput.addEventListener('change', function (event) {
         const file = event.target.files[0];
         if (file) {
@@ -1103,14 +1154,16 @@
                     originalImageHeight = img.naturalHeight;
                     backgroundScreen.style.backgroundImage = `url(${e.target.result})`;
 
-                    // 캔버스 크기를 이미지에 맞춤
+                    // 캔버스 크기를 이미지 + 여백에 맞춤
+                    const margin = parseInt(marginSlider.value);
                     const canvas = document.querySelector('.canvas');
-                    canvas.style.width = originalImageWidth + 'px';
-                    canvas.style.height = originalImageHeight + 'px';
+                    canvas.style.width = (originalImageWidth + margin * 2) + 'px';
+                    canvas.style.height = (originalImageHeight + margin * 2) + 'px';
                     backgroundScreen.style.backgroundSize = '100% 100%';
 
                     backgroundSizeSlider.value = 100;
                     document.getElementById('backgroundSizeValue').textContent = '100%';
+                    updateMarginGuide();
                     updateStatus('배경 이미지 로드됨');
                 };
                 img.src = e.target.result;
@@ -1557,7 +1610,14 @@
     }
 
     // Initialize
+    updateMarginGuide();
     updateStatus('준비됨 - 캔버스를 클릭하여 편집 시작');
+
+    // 캔버스 리사이즈 시 여백 가이드 업데이트
+    const canvasResizeObserver = new ResizeObserver(() => {
+        updateMarginGuide();
+    });
+    canvasResizeObserver.observe(document.querySelector('.canvas'));
 </script>
 </body>
 </html>
