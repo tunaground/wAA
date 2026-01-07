@@ -314,7 +314,7 @@
 
         #backgroundScreen {
             z-index: 1;
-            background-size: 100%;
+            background-size: auto;
             background-repeat: no-repeat;
             background-position: center;
         }
@@ -352,7 +352,7 @@
         }
 
         .highlight {
-            background-color: rgba(233, 69, 96, 0.4);
+            background-color: rgba(255, 230, 0, 0.7) !important;
             border-radius: 2px;
         }
 
@@ -489,15 +489,31 @@
 
         [data-theme="dark"] .icon-moon { display: block; }
         [data-theme="dark"] .icon-sun { display: none; }
+
+        /* Selection indicator */
+        .selection-indicator {
+            background: var(--accent);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
     </style>
 </head>
 <body>
     <header>
         <div>
             <h1>wAA</h1>
-            <p>Web ASCII Art Editor</p>
+            <p>웹 아스키 아트 에디터</p>
         </div>
-        <button class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark Mode">
+        <button class="theme-toggle" onclick="toggleTheme()" title="다크 모드 전환">
             <svg class="icon-sun" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             <svg class="icon-moon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
         </button>
@@ -507,67 +523,60 @@
         <aside class="sidebar">
             <!-- Background Controls -->
             <div class="panel">
-                <div class="panel-title">Background Image</div>
+                <div class="panel-title">배경 이미지</div>
                 <div class="control-group">
                     <div class="file-input-wrapper">
                         <label class="btn btn-primary btn-small" for="backgroundInput">
-                            Choose File
+                            파일 선택
                         </label>
-                        <button class="btn btn-secondary btn-small" onclick="clearBackground()">Clear</button>
+                        <button class="btn btn-secondary btn-small" onclick="clearBackground()">삭제</button>
                     </div>
                     <input type="file" id="backgroundInput" accept="image/*"/>
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Opacity</label>
+                    <label class="control-label">불투명도</label>
                     <input type="range" id="opacitySlider" min="0" max="100" value="100">
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Grayscale</label>
+                    <label class="control-label">흑백</label>
                     <input type="range" id="grayscaleSlider" min="0" max="100" value="0">
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Size</label>
-                    <input type="range" id="backgroundSizeSlider" min="50" max="200" value="100">
+                    <label class="control-label">크기 <span id="backgroundSizeValue">100%</span></label>
+                    <input type="range" id="backgroundSizeSlider" min="10" max="500" value="100">
                 </div>
                 <div class="control-group">
-                    <label class="control-label">X Position</label>
+                    <label class="control-label">X 위치</label>
                     <input type="range" id="backgroundXSlider" min="0" max="100" value="50">
                 </div>
                 <div class="control-group">
-                    <label class="control-label">Y Position</label>
+                    <label class="control-label">Y 위치</label>
                     <input type="range" id="backgroundYSlider" min="0" max="100" value="50">
                 </div>
             </div>
 
             <!-- Font Controls -->
             <div class="panel">
-                <div class="panel-title">Font Settings</div>
+                <div class="panel-title">폰트 설정</div>
                 <div class="control-group">
-                    <label class="control-label">Font Size</label>
+                    <label class="control-label">폰트 크기</label>
                     <input type="range" id="fontSizeSlider" min="8" max="64" value="16">
                 </div>
             </div>
 
             <!-- Dot Characters -->
             <div class="panel">
-                <div class="panel-title">Dot Characters</div>
+                <div class="panel-title">도트 문자</div>
                 <div class="dots-panel">
-                    <button class="dot-btn" onclick="addDot(' ')">Dot 1</button>
-                    <button class="dot-btn" onclick="addDot(' ')">Dot 2</button>
-                    <button class="dot-btn" onclick="addDot(' ')">Dot 3</button>
-                    <button class="dot-btn" onclick="addDot(' ')">Dot 4</button>
-                    <button class="dot-btn" onclick="addDot(' ')">Dot 5</button>
-                    <button class="dot-btn" onclick="addDot('  ')">Dot 6</button>
-                    <button class="dot-btn" onclick="addDot('  ')">Dot 7</button>
-                    <button class="dot-btn" onclick="addDot(' ')">Dot 8</button>
-                    <button class="dot-btn" onclick="addDot('  ')">Dot 9</button>
-                    <button class="dot-btn" onclick="addDot('  ')">Dot 10</button>
-                    <button class="dot-btn" onclick="addDot('　')">Dot 11</button>
-                    <button class="dot-btn" onclick="addDot('  ')">Dot 12</button>
-                    <button class="dot-btn" onclick="addDot('　 ')">Dot 13</button>
-                    <button class="dot-btn" onclick="addDot('　 ')">Dot 14</button>
-                    <button class="dot-btn" onclick="addDot('　 ')">Dot 15</button>
-                    <button class="dot-btn" onclick="addDot('　 ')">Dot 16</button>
+                    <button class="dot-btn" onclick="addDot(dots[0])">도트 1</button>
+                    <button class="dot-btn" onclick="addDot(dots[1])">도트 2</button>
+                    <button class="dot-btn" onclick="addDot(dots[2])">도트 3</button>
+                    <button class="dot-btn" onclick="addDot(dots[3])">도트 4</button>
+                    <button class="dot-btn" onclick="addDot(dots[4])">도트 5</button>
+                    <button class="dot-btn" onclick="addDot(dots[5])">도트 6</button>
+                    <button class="dot-btn" onclick="addDot(dots[6])">도트 7</button>
+                    <button class="dot-btn" onclick="addDot(dots[7])">도트 8</button>
+                    <button class="dot-btn" onclick="addDot(dots[8])">도트 9</button>
                 </div>
             </div>
 
@@ -575,16 +584,16 @@
             <div class="help-section">
                 <button class="help-toggle" onclick="toggleHelp()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                    Help & Shortcuts
+                    도움말 & 단축키
                 </button>
                 <div class="help-content" id="helpContent">
                     <ul>
-                        <li>Drag canvas corner to resize</li>
-                        <li>Click and drag to select characters</li>
-                        <li>Shift + Arrow keys to move selection</li>
-                        <li>Ctrl/Cmd + A to select all (in selection mode)</li>
-                        <li>Ctrl/Cmd + C/X/V for copy/cut/paste</li>
-                        <li>Click empty area to deselect</li>
+                        <li>캔버스 모서리 드래그로 크기 조절</li>
+                        <li>클릭 후 드래그로 문자 선택</li>
+                        <li>Shift + 방향키로 선택 영역 이동</li>
+                        <li>Ctrl/Cmd + C/X/V로 복사/잘라내기/붙여넣기</li>
+                        <li>Escape 또는 빈 영역 클릭으로 선택 해제</li>
+                        <li>스페이스바로 도트 너비 순환</li>
                     </ul>
                 </div>
             </div>
@@ -594,22 +603,28 @@
             <!-- Toolbar -->
             <div class="toolbar">
                 <div class="toolbar-group">
-                    <button class="toolbar-btn" onclick="moveSelected(-1, 0)" title="Move Left">
+                    <button class="toolbar-btn" onclick="moveSelected(-1, 0)" title="왼쪽 이동">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
                     </button>
-                    <button class="toolbar-btn" onclick="moveSelected(1, 0)" title="Move Right">
+                    <button class="toolbar-btn" onclick="moveSelected(1, 0)" title="오른쪽 이동">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
                     </button>
-                    <button class="toolbar-btn" onclick="moveSelected(0, -1)" title="Move Up">
+                    <button class="toolbar-btn" onclick="moveSelected(0, -1)" title="위로 이동">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
                     </button>
-                    <button class="toolbar-btn" onclick="moveSelected(0, 1)" title="Move Down">
+                    <button class="toolbar-btn" onclick="moveSelected(0, 1)" title="아래로 이동">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
                     </button>
                 </div>
                 <div class="toolbar-group">
-                    <button class="toolbar-btn" id="gridToggle" onclick="toggleGrid()" title="Toggle Character Grid">
+                    <button class="toolbar-btn" id="gridToggle" onclick="toggleGrid()" title="문자 그리드 전환">
                         <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                    </button>
+                </div>
+                <div class="toolbar-group" id="selectionGroup" style="display: none;">
+                    <span class="selection-indicator">선택 모드</span>
+                    <button class="toolbar-btn" onclick="clearSelection()" title="선택 해제 (Esc)">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                     </button>
                 </div>
             </div>
@@ -651,6 +666,9 @@
     const backgroundXSlider = document.querySelector('#backgroundXSlider');
     const backgroundYSlider = document.querySelector('#backgroundYSlider');
 
+    let originalImageWidth = 0;
+    let originalImageHeight = 0;
+
     function toggleHelp() {
         const helpContent = document.getElementById('helpContent');
         helpContent.classList.toggle('active');
@@ -660,8 +678,32 @@
         panel.classList.toggle('show-grid');
         const isOn = panel.classList.contains('show-grid');
         document.getElementById('gridToggle').style.background = isOn ? 'var(--accent)' : '';
-        updateStatus(isOn ? 'Character grid ON' : 'Character grid OFF');
+        updateStatus(isOn ? '문자 그리드 켜짐' : '문자 그리드 꺼짐');
     }
+
+    function clearSelection() {
+        document.querySelectorAll('.highlight').forEach(el => {
+            el.classList.remove('highlight');
+        });
+        updateSelectionUI();
+        updateStatus('선택 해제됨');
+        writer.focus();
+    }
+
+    function updateSelectionUI() {
+        const hasSelection = document.querySelector('.highlight') !== null;
+        document.getElementById('selectionGroup').style.display = hasSelection ? 'flex' : 'none';
+    }
+
+    // Escape key to clear selection
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            const hasSelection = document.querySelector('.highlight') !== null;
+            if (hasSelection) {
+                clearSelection();
+            }
+        }
+    });
 
     function updateStatus(text) {
         statusText.textContent = text;
@@ -679,11 +721,17 @@
     writer.addEventListener('click', updateCursorPosition);
     writer.addEventListener('keyup', updateCursorPosition);
 
-    // Dot characters array
+    // Dot characters array (narrowest to widest)
     const dots = [
-        ' ', ' ', ' ', ' ', ' ',   // Dot 1-5
-        '  ', '  ', ' ', '  ', '  ', // Dot 6-10
-        '　', '  ', '　 ', '　 ', '　 ', '　 ' // Dot 11-16
+        '\u200A',           // 1: Hair Space
+        '\u2009',           // 2: Thin Space
+        '\u2006',           // 3: Six-Per-Em Space
+        '\u2005',           // 4: Four-Per-Em Space
+        ' ',                // 5: Space (U+0020)
+        ' \u200A',          // 6: Space + Hair
+        ' \u2009',          // 7: Space + Thin
+        ' \u2006',          // 8: Space + Six-Per-Em
+        ' \u2005',          // 9: Space + Four-Per-Em
     ];
 
     // Space sequence state
@@ -698,11 +746,11 @@
     }
 
     function getDotString(index) {
-        const cycleCount = Math.floor(index / 16);
-        const dotIndex = index % 16;
+        const cycleCount = Math.floor(index / 9);
+        const dotIndex = index % 9;
         let result = '';
         for (let i = 0; i < cycleCount; i++) {
-            result += dots[15]; // dot 16
+            result += dots[8]; // dot 9 (가장 넓음)
         }
         result += dots[dotIndex];
         return result;
@@ -722,7 +770,7 @@
         writer.selectionStart = writer.selectionEnd = startPos + str.length;
 
         writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
-        updateStatus('Dot character inserted');
+        updateStatus('도트 문자 삽입됨');
     }
 
     // Spacebar handler
@@ -754,7 +802,7 @@
             spaceIndex++;
 
             writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
-            updateStatus(`Dot ${(spaceIndex - 1) % 16 + 1} (cycle ${Math.floor((spaceIndex - 1) / 16) + 1})`);
+            updateStatus(`Dot ${(spaceIndex - 1) % 9 + 1} (cycle ${Math.floor((spaceIndex - 1) / 9) + 1})`);
         } else if (!e.ctrlKey && !e.metaKey && !e.altKey) {
             resetSpaceSequence();
         }
@@ -769,7 +817,9 @@
     function clearBackground() {
         backgroundInput.value = '';
         backgroundScreen.style.backgroundImage = '';
-        updateStatus('Background cleared');
+        originalImageWidth = 0;
+        originalImageHeight = 0;
+        updateStatus('배경 이미지 삭제됨');
     }
 
     fontSizeSlider.addEventListener('input', function () {
@@ -787,7 +837,11 @@
     });
 
     backgroundSizeSlider.addEventListener('input', function () {
-        backgroundScreen.style.backgroundSize = `${backgroundSizeSlider.value}%`;
+        document.getElementById('backgroundSizeValue').textContent = backgroundSizeSlider.value + '%';
+        if (originalImageWidth > 0) {
+            const scale = backgroundSizeSlider.value / 100;
+            backgroundScreen.style.backgroundSize = `${originalImageWidth * scale}px ${originalImageHeight * scale}px`;
+        }
     })
 
     backgroundXSlider.addEventListener('input', function () {
@@ -803,8 +857,17 @@
         if (file) {
             const reader = new FileReader();
             reader.onload = function (e) {
-                backgroundScreen.style.backgroundImage = `url(${e.target.result})`;
-                updateStatus('Background image loaded');
+                const img = new Image();
+                img.onload = function() {
+                    originalImageWidth = img.naturalWidth;
+                    originalImageHeight = img.naturalHeight;
+                    backgroundScreen.style.backgroundImage = `url(${e.target.result})`;
+                    backgroundScreen.style.backgroundSize = `${originalImageWidth}px ${originalImageHeight}px`;
+                    backgroundSizeSlider.value = 100;
+                    document.getElementById('backgroundSizeValue').textContent = '100%';
+                    updateStatus('배경 이미지 로드됨');
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
         }
@@ -816,11 +879,11 @@
             if (highlight !== null) {
                 event.preventDefault();
 
-                const chars = document.querySelectorAll('.char');
+                const chars = document.querySelectorAll('.char:not(.eof)');
                 chars.forEach(c => {
                     c.classList.add('highlight');
                 })
-                updateStatus('All characters selected');
+                updateStatus('전체 선택됨');
             }
         }
     });
@@ -874,7 +937,7 @@
             });
 
             event.clipboardData.setData("application/json", JSON.stringify(v));
-            updateStatus('Selection copied');
+            updateStatus('선택 영역 복사됨');
         }
     });
 
@@ -903,7 +966,7 @@
             writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
 
             event.clipboardData.setData("application/json", JSON.stringify(v));
-            updateStatus('Selection cut');
+            updateStatus('선택 영역 잘라내기됨');
         }
     });
 
@@ -928,7 +991,7 @@
 
                 writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
             });
-            updateStatus('Content pasted');
+            updateStatus('붙여넣기됨');
         }
     });
 
@@ -945,10 +1008,49 @@
                 const highlightArray = Array.from(highlightElements);
                 const firstLine = parseInt(highlightArray[0].dataset.line);
                 const firstColumn = parseInt(highlightArray[0].dataset.column);
-                const lastLine = highlightArray[highlightArray.length - 1].dataset.line;
+                const lastLine = parseInt(highlightArray[highlightArray.length - 1].dataset.line);
 
                 const movedLine = firstLine + y;
                 const movedColumn = firstColumn + x;
+
+                // 수평 이동 (같은 줄)인 경우 position 기반 계산
+                if (y === 0 && firstLine === lastLine) {
+                    const firstPosition = parseInt(highlightArray[0].dataset.position);
+                    const selectedText = highlightArray.map(el => el.innerHTML).join('');
+                    const selectionLength = highlightArray.length;
+
+                    // 이동 가능 체크
+                    if (x < 0 && firstColumn + x < 0) throw new Error("Cannot move left");
+
+                    // 오른쪽 이동 시 줄 끝 체크
+                    if (x > 0) {
+                        const lineEnd = document.querySelector('[data-line="' + firstLine + '"].eof, [data-line="' + (firstLine + 1) + '"][data-column="0"]');
+                        const lastSelectedColumn = parseInt(highlightArray[highlightArray.length - 1].dataset.column);
+                        const lineLength = lineEnd ? parseInt(lineEnd.dataset.column) : writer.value.split('\n')[firstLine].length;
+                        if (lastSelectedColumn + x >= lineLength) throw new Error("Cannot move right");
+                    }
+
+                    // 선택 영역 삭제
+                    writer.value = writer.value.slice(0, firstPosition) + writer.value.slice(firstPosition + selectionLength);
+                    writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
+
+                    // 새 위치에 삽입
+                    const targetPosition = firstPosition + x;
+                    writer.value = writer.value.slice(0, targetPosition) + decodeHtmlEntity(selectedText) + writer.value.slice(targetPosition);
+                    writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
+
+                    // 하이라이트 복원
+                    const chars = document.querySelectorAll('.char:not(.eof)');
+                    chars.forEach(c => {
+                        const pos = parseInt(c.dataset.position);
+                        if (pos >= targetPosition && pos < targetPosition + selectionLength) {
+                            c.classList.add('highlight');
+                        }
+                    });
+                    updateSelectionUI();
+                    updateStatus('선택 영역 이동됨');
+                    return;
+                }
 
                 const v = []
 
@@ -969,7 +1071,7 @@
 
                 v.forEach((v, i) => {
                     const line = movedLine + i;
-                    const el = document.querySelector('[data-line="' + line + '"][data-column="' + movedColumn + '"]');
+                    const el = document.querySelector('[data-line="' + line + '"][data-column="' + movedColumn + '"]:not(.eof)');
                     const position = parseInt(el.dataset.position);
                     pastedPosition.push({
                         position,
@@ -986,7 +1088,7 @@
 
                 pastedPosition.forEach((v) => {
                     const lastColumn = parseInt(v.position) + parseInt(v.length);
-                    const chars = document.querySelectorAll('.char');
+                    const chars = document.querySelectorAll('.char:not(.eof)');
 
                     chars.forEach(c => {
                         if (parseInt(c.dataset.position) >= parseInt(v.position) && c.dataset.position < lastColumn) {
@@ -994,12 +1096,12 @@
                         }
                     });
                 })
-                updateStatus('Selection moved');
+                updateStatus('선택 영역 이동됨');
             } catch (e) {
                 writer.value = contentBackup
                 writer.dispatchEvent(new Event('input', {bubbles: true, cancelable: true}));
                 selectionBackup.forEach((v) => {
-                    const chars = document.querySelectorAll('.char');
+                    const chars = document.querySelectorAll('.char:not(.eof)');
 
                     chars.forEach(c => {
                         if (parseInt(c.dataset.position) === parseInt(v)) {
@@ -1007,7 +1109,7 @@
                         }
                     });
                 })
-                updateStatus('Cannot move selection here');
+                updateStatus('이동할 수 없는 위치입니다');
             }
         }
     }
@@ -1068,7 +1170,8 @@
             }
         }
 
-        panel.innerHTML = panelResult
+        panel.innerHTML = panelResult;
+        updateSelectionUI();
     });
 
     let isDragging = false;
@@ -1103,7 +1206,7 @@
         selectionBox.style.top = height > 0 ? `${startY}px` : `${e.pageY}px`;
 
         const selectionRect = selectionBox.getBoundingClientRect();
-        const chars = document.querySelectorAll('.char');
+        const chars = document.querySelectorAll('.char:not(.eof)');
 
         chars.forEach(c => {
             const cRect = c.getBoundingClientRect();
@@ -1121,7 +1224,7 @@
         isDragging = false;
 
         const selectionRect = selectionBox.getBoundingClientRect();
-        const chars = document.querySelectorAll('.char');
+        const chars = document.querySelectorAll('.char:not(.eof)');
         let selectedCount = 0;
 
         chars.forEach(c => {
@@ -1134,6 +1237,7 @@
             }
         });
         getSelection();
+        updateSelectionUI();
 
         if (selectedCount > 0) {
             updateStatus(`${selectedCount} characters selected`);
@@ -1169,7 +1273,7 @@
     }
 
     // Initialize
-    updateStatus('Ready - Click on canvas to start editing');
+    updateStatus('준비됨 - 캔버스를 클릭하여 편집 시작');
 </script>
 </body>
 </html>
